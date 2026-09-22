@@ -1,75 +1,124 @@
-# React + TypeScript + Vite
+# Hurios Rally Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend de **Hurios Rally**, una aplicación web orientada a la venta y gestión de repuestos para vehículos menores.
 
-Currently, two official plugins are available:
+## Descripción
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Hurios Rally permite a los usuarios consultar un catálogo de repuestos para vehículos menores, visualizar información de los productos y gestionar sus compras mediante un carrito.
 
-## React Compiler
+El proyecto forma parte de un desarrollo académico y utiliza una arquitectura frontend basada en componentes y servicios, preparada para consumir una API REST.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tecnologías
 
-## Expanding the ESLint configuration
+* React
+* TypeScript
+* Vite
+* React Router
+* Tailwind CSS
+* Node.js
+* pnpm
+* Git
+* GitHub
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Requisitos
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Para ejecutar el proyecto se necesita tener instalado:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+* Node.js
+* pnpm
+* Git
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Instalación
 
+Clonar el repositorio:
+
+```bash
+git clone URL_DEL_REPOSITORIO
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Ingresar al proyecto:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+cd HuriosRally-Frontend-Avance1
 ```
+
+Instalar las dependencias:
+
+```bash
+pnpm install
+```
+
+Crear el archivo `.env` tomando como referencia `.env.example`.
+
+## Variables de entorno
+
+El proyecto utiliza variables de entorno para configurar la URL de la API.
+
+Ejemplo:
+
+```env
+VITE_API_URL=http://localhost:8080
+```
+
+El archivo `.env` no debe ser incluido en el repositorio. Para configurar el proyecto se debe utilizar `.env.example` como referencia.
+
+## Ejecución
+
+Para iniciar el servidor de desarrollo:
+
+```bash
+pnpm dev
+```
+
+Para generar la versión de producción:
+
+```bash
+pnpm build
+```
+
+Para verificar el código mediante ESLint:
+
+```bash
+pnpm lint
+```
+
+## Rutas principales
+
+Actualmente el frontend cuenta con las siguientes rutas:
+
+* `/` — Página principal.
+* `/productos` — Catálogo de repuestos.
+* `/productos/:id` — Detalle de un repuesto.
+* `/carrito` — Carrito de compras.
+
+## Estructura del proyecto
+
+```text
+src/
+├── pages/
+│   ├── HomePage.tsx
+│   ├── ProductsPage.tsx
+│   ├── ProductDetailPage.tsx
+│   └── CartPage.tsx
+│
+├── routes/
+│   └── AppRouter.tsx
+│
+├── App.tsx
+├── index.css
+└── main.tsx
+```
+
+## Ramas
+
+El proyecto utiliza la siguiente estrategia de ramas:
+
+* `main`: versión estable del proyecto.
+* `develop`: rama principal de integración.
+* `feature/*`: ramas destinadas al desarrollo de funcionalidades específicas.
+
+## Estado del proyecto
+
+El proyecto se encuentra en desarrollo. La estructura inicial, configuración del entorno, dependencias principales y rutas de la aplicación se encuentran implementadas.
+
+Las siguientes etapas incorporarán los componentes reutilizables, integración con la API REST, gestión del estado, formularios, validaciones y funcionalidades relacionadas con los productos y el carrito.
