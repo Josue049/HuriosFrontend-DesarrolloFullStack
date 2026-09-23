@@ -86,8 +86,8 @@ pnpm lint
 
 Actualmente el frontend cuenta con las siguientes rutas:
 
-* `/` — Página principal.
-* `/productos` — Catálogo de repuestos.
+* `/` — Página principal con banners promocionales y productos destacados.
+* `/productos` — Catálogo de repuestos y componentes con filtros y tarjetas informativas.
 * `/productos/:id` — Detalle de un repuesto.
 * `/carrito` — Carrito de compras.
 
@@ -95,15 +95,20 @@ Actualmente el frontend cuenta con las siguientes rutas:
 
 ```text
 src/
+├── assets/             # Recursos estáticos locales
+├── components/
+│   ├── layout/         # Componentes estructurales (Navbar, Footer, Hero, MainLayout)
+│   ├── product/        # Componentes de negocio (ProductCard, ShopCard, BrandsCarousel)
+│   └── ui/             # Componentes reutilizables (Button, Input, Loading, ErrorMessage)
+├── config/             # Configuración base de la aplicación y API
+├── hooks/              # Hooks personalizados (useReveal)
 ├── pages/
 │   ├── HomePage.tsx
 │   ├── ProductsPage.tsx
 │   ├── ProductDetailPage.tsx
 │   └── CartPage.tsx
-│
 ├── routes/
 │   └── AppRouter.tsx
-│
 ├── App.tsx
 ├── index.css
 └── main.tsx
@@ -115,10 +120,12 @@ El proyecto utiliza la siguiente estrategia de ramas:
 
 * `main`: versión estable del proyecto.
 * `develop`: rama principal de integración.
-* `feature/*`: ramas destinadas al desarrollo de funcionalidades específicas.
+* `feature/*`: ramas destinadas al desarrollo de funcionalidades específicas:
+  * `feature/setup`: configuración inicial del proyecto y rutas.
+  * `feature/ui`: componentes reutilizables, layout y vistas principales.
+  * `feature/api`: cliente HTTP y servicios de integración con backend.
+  * `feature/state`: gestión de estado global, contexto y formularios.
 
 ## Estado del proyecto
 
-El proyecto se encuentra en desarrollo. La estructura inicial, configuración del entorno, dependencias principales y rutas de la aplicación se encuentran implementadas.
-
-Las siguientes etapas incorporarán los componentes reutilizables, integración con la API REST, gestión del estado, formularios, validaciones y funcionalidades relacionadas con los productos y el carrito.
+Se han implementado con éxito la estructura inicial, dependencias, rutas, layout de la aplicación (`Navbar`, `Footer`, `MainLayout`), componentes reutilizables (`Button`, `Input`, `Loading`, `ErrorMessage`), tarjetas de productos (`ProductCard`, `ShopCard`) y la vista principal (`HomePage`).
