@@ -30,3 +30,30 @@ const VehicleContext = createContext<VehicleContextType | undefined>(
 type VehicleProviderProps = {
     children: ReactNode;
 };
+
+export function VehicleProvider({
+                                    children,
+                                }: VehicleProviderProps) {
+    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadVehicles = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const data = await vehicleService.getAll();
+
+            setVehicles(data);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "No se pudieron cargar los vehículos.",
+            );
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+}
