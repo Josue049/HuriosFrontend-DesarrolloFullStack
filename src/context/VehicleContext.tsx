@@ -56,4 +56,45 @@ export function VehicleProvider({
             setLoading(false);
         }
     }, []);
+
+    const addVehicle = useCallback(
+        async (vehicle: CreateVehicleRequest): Promise<Vehicle> => {
+            try {
+                setError(null);
+
+                const createdVehicle = await vehicleService.create(vehicle);
+
+                setVehicles((currentVehicles) => [
+                    ...currentVehicles,
+                    createdVehicle,
+                ]);
+
+                return createdVehicle;
+            } catch (err) {
+                const message =
+                    err instanceof Error
+                        ? err.message
+                        : "No se pudo registrar el vehículo.";
+
+                setError(message);
+
+                throw err;
+            }
+        },
+        [],
+    );
+
+    return (
+        <VehicleContext.Provider
+            value={{
+                vehicles,
+                loading,
+                error,
+                loadVehicles,
+                addVehicle,
+            }}
+        >
+            {children}
+        </VehicleContext.Provider>
+    );
 }
