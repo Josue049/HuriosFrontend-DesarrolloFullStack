@@ -98,3 +98,15 @@ export function VehicleProvider({
         </VehicleContext.Provider>
     );
 }
+
+export function useVehicleContext(): VehicleContextType {
+    const context = useContext(VehicleContext);
+
+    if (!context) {
+        throw new Error(
+            "useVehicleContext debe utilizarse dentro de VehicleProvider.",
+        );
+    }
+
+    return context;
+}
