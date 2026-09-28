@@ -1,10 +1,15 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+// src/main.tsx
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import "./index.css";
+import { initLocalDb } from "./api/localStorageDb";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+// Inicializa la DB local (seed de productos y usuarios)
+initLocalDb();
+
+createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
     <App />
-  </StrictMode>,
-)
+  </React.StrictMode>
+);
