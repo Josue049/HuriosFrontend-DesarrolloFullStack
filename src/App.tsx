@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useRef } from 'react';
 import AppRoutes from "./routes/AppRoutes";
 import { LoadingScreen } from './components/ui/LoadingScreen';
 
