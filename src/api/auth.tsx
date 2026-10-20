@@ -140,7 +140,9 @@ export async function sendVerificationCode(email: string) {
 
 export async function verifyCode(email: string, code: string) {
   await delay();
+
   const users = getUsers();
+
   const idx = users.findIndex(
     (u) => u.email.toLowerCase() === email.toLowerCase()
   );
@@ -155,9 +157,20 @@ export async function verifyCode(email: string, code: string) {
 
   users[idx].isVerified = true;
   delete users[idx].verificationCode;
+
   saveUsers(users);
 
-  return { message: "Cuenta verificada correctamente" };
+  const user = users[idx];
+
+  setCurrentEmail(user.email);
+
+  const token = generateFakeToken(user);
+
+  return {
+    message: "Cuenta verificada correctamente",
+    token,
+    role: user.role,
+  };
 }
 
 export async function requestPasswordReset(email: string) {
