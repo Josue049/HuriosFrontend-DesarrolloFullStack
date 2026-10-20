@@ -1,23 +1,37 @@
-﻿import { useState, useRef } from 'react';
+﻿import { useState, useEffect } from 'react';
 import AppRoutes from "./routes/AppRoutes";
 import { LoadingScreen } from './components/ui/LoadingScreen';
-
-const MIN_LOADING_MS = 3500;
+import WhatsAppButton from './components/whatsapp/WhatsAppButton';
 
 function App() {
   const [showLoading, setShowLoading] = useState(true);
-  const startRef = useRef(Date.now());
+  const [hasShownLoading, setHasShownLoading] = useState(false);
+
+  useEffect(() => {
+    // Verificar si ya se mostró la pantalla de carga en esta sesión
+    const loadingShown = sessionStorage.getItem('loadingShown');
+    if (loadingShown === 'true') {
+      setShowLoading(false);
+      setHasShownLoading(true);
+    }
+  }, []);
 
   const handleLoadingComplete = () => {
-    const elapsed = Date.now() - startRef.current;
-    const remaining = Math.max(0, MIN_LOADING_MS - elapsed);
-    setTimeout(() => setShowLoading(false), remaining);
+    setShowLoading(false);
+    setHasShownLoading(true);
+    // Guardar que ya se mostró en esta sesión
+    sessionStorage.setItem('loadingShown', 'true');
   };
 
   return (
     <>
-      {showLoading && <LoadingScreen onLoadingComplete={handleLoadingComplete} />}
+      {showLoading && !hasShownLoading && (
+        <LoadingScreen onLoadingComplete={handleLoadingComplete} />
+      )}
       <AppRoutes />
+
+      {/* Botón flotante de WhatsApp — visible en toda la web */}
+      {!showLoading && <WhatsAppButton />}
     </>
   );
 }

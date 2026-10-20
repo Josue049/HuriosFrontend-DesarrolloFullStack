@@ -7,15 +7,15 @@ import Footer from "../components/layout/Footer";
 
 const CATEGORIES: { [key: string]: string } = {
   "1": "Motor",
-  "2": "Neumaticos",
-  "3": "Carroceria",
+  "2": "Neumáticos",
+  "3": "Carrocería",
   "4": "Filtros",
-  "5": "Suspension",
-  "6": "Frenos",
-  "7": "Electrico",
-  "8": "Accesorios",
-  "9": "Transmision",
-  "10": "Lubricantes"
+  "5":"Suspensión",
+  "6":"Frenos",
+  "7":"Eléctrico",
+  "8":"Accesorios",
+  "9":"Transmisión",
+  "10":"Lubricantes"
 };
 
 export function Category() {
