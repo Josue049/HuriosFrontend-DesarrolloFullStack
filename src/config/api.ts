@@ -1,5 +1,5 @@
 const LOCAL_API_URL = "http://localhost:8080";
-const PRODUCTION_FALLBACK_API_URL = "https://huriosrally-backend.onrender.com";
+const PRODUCTION_FALLBACK_API_URL = "https://huriosbackend-desarrollofullstack.onrender.com";
 
 function normalizeUrl(url: string) {
   return url.trim().replace(/\/+$/, "");
