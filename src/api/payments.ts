@@ -44,6 +44,27 @@ export interface PaymentSale {
   };
 }
 
+export interface CheckoutPreferenceResponse {
+  success: boolean;
+  saleId: number;
+  preferenceId: string;
+  initPoint: string;
+  sandboxInitPoint: string;
+  transactionId?: string;
+  message: string;
+}
+
+export interface PaymentVerificationResponse {
+  approved: boolean;
+  saleId: number;
+  status: string;
+  mpPaymentId?: string;
+  paymentMethod?: string;
+  total: number;
+  transactionId?: string;
+  message: string;
+}
+
 function requireToken() {
   const token = getToken();
   if (!token) {
@@ -86,6 +107,38 @@ async function fetchWithAuth<T>(path: string): Promise<T> {
   } catch (error) {
     asNetworkError(error);
   }
+}
+
+export async function createMercadoPagoCheckout(payload: Record<string, unknown>): Promise<CheckoutPreferenceResponse> {
+  const token = requireToken();
+
+  try {
+    const res = await fetch(`${API_BASE}/payments/checkout`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      handleUnauthorizedResponse();
+    }
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || body.message || "Error al iniciar pago con MercadoPago");
+    }
+
+    return await res.json();
+  } catch (error) {
+    asNetworkError(error);
+  }
+}
+
+export async function verifyMercadoPagoPayment(queryString: string): Promise<PaymentVerificationResponse> {
+  return fetchWithAuth<PaymentVerificationResponse>(`/payments/verify?${queryString}`);
 }
 
 export async function getMyOrders(): Promise<PaymentSale[]> {
