@@ -1,5 +1,3 @@
-import { clearCurrentEmail } from "../api/localStorageDb";
-
 const TOKEN_KEY = "hurios_token";
 const ROLE_KEY = "hurios_role";
 const AUTH_MESSAGE_KEY = "hurios_auth_message";
@@ -22,7 +20,6 @@ export function clearToken() {
   if (typeof window !== "undefined" && window.localStorage) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ROLE_KEY);
-    clearCurrentEmail();
   }
 }
 
