@@ -6,6 +6,7 @@ const DEFAULT_EXPIRED_MESSAGE = "Tu sesion expiro. Inicia sesion de nuevo.";
 export function saveToken(token: string) {
   if (typeof window !== "undefined" && window.localStorage) {
     localStorage.setItem(TOKEN_KEY, token);
+    window.dispatchEvent(new Event("hurios-auth-change"));
   }
 }
 
@@ -20,6 +21,7 @@ export function clearToken() {
   if (typeof window !== "undefined" && window.localStorage) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ROLE_KEY);
+    window.dispatchEvent(new Event("hurios-auth-change"));
   }
 }
 
