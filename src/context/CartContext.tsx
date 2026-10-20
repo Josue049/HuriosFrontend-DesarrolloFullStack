@@ -1,6 +1,8 @@
-﻿// src/context/CartContext.tsx
-import React, { createContext, useContext, useReducer, type ReactNode, useEffect } from 'react';
+// src/context/CartContext.tsx
+import React, { createContext, useContext, useReducer, type ReactNode, useEffect, useRef } from 'react';
 import { type Product } from '../components/product/ShopCard';
+import { getToken } from '../utils/token';
+import { fetchCartApi, mergeCartApi, updateCartApi, clearCartApi } from '../api/cart';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -17,6 +19,7 @@ type CartAction =
   | { type: 'ADD_TO_CART'; payload: Product }
   | { type: 'REMOVE_FROM_CART'; payload: number }
   | { type: 'UPDATE_QUANTITY'; payload: { id: number; quantity: number } }
+  | { type: 'SET_CART'; payload: CartItem[] }
   | { type: 'TOGGLE_CART' }
   | { type: 'CLEAR_CART' };
 
@@ -29,6 +32,11 @@ interface CartContextType extends CartState {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+const calculateTotals = (items: CartItem[]) => ({
+  totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
+  totalPrice: items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0),
+});
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
@@ -59,8 +67,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         newItems = [...state.items, { ...action.payload, quantity: 1 }];
       }
 
-      const totalItems = newItems.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const { totalItems, totalPrice } = calculateTotals(newItems);
 
       return {
         ...state,
@@ -72,8 +79,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
     case 'REMOVE_FROM_CART': {
       const newItems = state.items.filter(item => item.id !== action.payload);
-      const totalItems = newItems.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const { totalItems, totalPrice } = calculateTotals(newItems);
 
       return {
         ...state,
@@ -96,12 +102,22 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         return item;
       }).filter(item => item.quantity > 0);
 
-      const totalItems = newItems.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const { totalItems, totalPrice } = calculateTotals(newItems);
 
       return {
         ...state,
         items: newItems,
+        totalItems,
+        totalPrice,
+      };
+    }
+
+    case 'SET_CART': {
+      const validItems = Array.isArray(action.payload) ? action.payload : [];
+      const { totalItems, totalPrice } = calculateTotals(validItems);
+      return {
+        ...state,
+        items: validItems,
         totalItems,
         totalPrice,
       };
@@ -153,15 +169,67 @@ const initialState: CartState = loadCartFromStorage();
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const isRemoteUpdateRef = useRef(false);
+  const lastSyncedTokenRef = useRef<string | null>(null);
 
-  // Guardar en localStorage cada vez que cambia el estado del carrito
+  // Sincronizar o fusionar con MongoDB cuando hay sesión activa
+  useEffect(() => {
+    const syncInitialCartWithMongo = async () => {
+      const token = getToken();
+      if (!token || lastSyncedTokenRef.current === token) {
+        return;
+      }
+      lastSyncedTokenRef.current = token;
+
+      const remoteItems = state.items.length > 0
+        ? await mergeCartApi(state.items)
+        : await fetchCartApi();
+
+      if (remoteItems !== null) {
+        isRemoteUpdateRef.current = true;
+        dispatch({ type: 'SET_CART', payload: remoteItems });
+      }
+    };
+
+    syncInitialCartWithMongo();
+
+    const handleAuthOrStorage = () => {
+      const currentToken = getToken();
+      if (currentToken && lastSyncedTokenRef.current !== currentToken) {
+        syncInitialCartWithMongo();
+      } else if (!currentToken) {
+        lastSyncedTokenRef.current = null;
+      }
+    };
+
+    window.addEventListener('hurios-auth-change', handleAuthOrStorage);
+    window.addEventListener('focus', handleAuthOrStorage);
+    window.addEventListener('storage', handleAuthOrStorage);
+    return () => {
+      window.removeEventListener('hurios-auth-change', handleAuthOrStorage);
+      window.removeEventListener('focus', handleAuthOrStorage);
+      window.removeEventListener('storage', handleAuthOrStorage);
+    };
+  }, [state.items]);
+
+  // Guardar en localStorage y en MongoDB cada vez que cambian los items del carrito
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
       console.error('Error saving cart to localStorage:', error);
     }
-  }, [state]);
+
+    if (isRemoteUpdateRef.current) {
+      isRemoteUpdateRef.current = false;
+      return;
+    }
+
+    const token = getToken();
+    if (token && lastSyncedTokenRef.current === token) {
+      updateCartApi(state.items);
+    }
+  }, [state.items]);
 
   const addToCart = (product: Product) => {
     dispatch({ type: 'ADD_TO_CART', payload: product });
@@ -181,6 +249,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' });
+    if (getToken()) {
+      clearCartApi();
+    }
   };
 
   const value: CartContextType = {

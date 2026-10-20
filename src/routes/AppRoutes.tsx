@@ -1,4 +1,4 @@
-﻿// src/routes/AppRoutes.tsx
+// src/routes/AppRoutes.tsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
@@ -12,6 +12,7 @@ import { About } from "../pages/About";
 import { Cart } from "../pages/Cart";
 import { Checkout } from "../pages/Checkout";
 import { Payment } from "../pages/Payment";
+import { PaymentResult } from "../pages/PaymentResult";
 import { CartProvider } from "../context/CartContext";
 import CartSidebar from "../components/cart/CartSidebar";
 import { UserProfile } from "../pages/UserProfile";
@@ -37,6 +38,9 @@ const AppRoutes: React.FC = () => (
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/payment" element={<Payment />} />
+        <Route path="/pago/exito" element={<PaymentResult />} />
+        <Route path="/pago/fallo" element={<PaymentResult />} />
+        <Route path="/pago/pendiente" element={<PaymentResult />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/my-orders" element={<MyOrders />} />
@@ -63,5 +67,3 @@ const AppRoutes: React.FC = () => (
 );
 
 export default AppRoutes;
-
-
