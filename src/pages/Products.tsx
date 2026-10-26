@@ -19,7 +19,7 @@ export default function Products() {
   const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc">("name");
 
   useEffect(() => {
-    (async () => {
+    const fetchCatalog = async () => {
       try {
         const data = await getAllProducts();
         setProducts(data);
@@ -29,7 +29,18 @@ export default function Products() {
       } finally {
         setLoading(false);
       }
-    })();
+    };
+
+    fetchCatalog();
+
+    // Escuchar eventos WebSocket en tiempo real para actualizar stock y catálogo sin recargar
+    const handleRealtimeEvent = () => {
+      fetchCatalog();
+    };
+    window.addEventListener("hurios-realtime-event", handleRealtimeEvent);
+    return () => {
+      window.removeEventListener("hurios-realtime-event", handleRealtimeEvent);
+    };
   }, []);
 
   useEffect(() => {
