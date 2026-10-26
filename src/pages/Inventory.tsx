@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import Navbar from "../components/layout/Navbar";
 import { useState, useRef, useEffect } from "react";
 import ProductCard from "../components/product/ProductCard";
@@ -51,7 +51,14 @@ export function Inventory() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileRef = useRef<HTMLInputElement | null>(null);
 
-    // Cargar productos al montar el componente o cuando cambia la query
+    // Cargar productos al montar el componente y suscribirse a eventos WebSocket en tiempo real
+    useEffect(() => {
+        const handleRealtime = () => {
+            loadProducts();
+        };
+        window.addEventListener("hurios-realtime-event", handleRealtime);
+        return () => window.removeEventListener("hurios-realtime-event", handleRealtime);
+    }, [query]);
     useEffect(() => {
         loadProducts();
     }, []);
