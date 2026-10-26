@@ -1,131 +1,78 @@
-# Hurios Rally Frontend
+# Hurios Rally - Frontend Web Application
 
-Frontend de **Hurios Rally**, una aplicación web orientada a la venta y gestión de repuestos para vehículos menores.
+Aplicación Frontend moderna y responsiva construida con **React 19, TypeScript, Vite y Tailwind CSS 4** para el e-commerce de repuestos automotrices **Hurios Rally E.I.R.L.** Se integra con el Backend en Spring Boot mediante **REST API**, pasarela de pagos **MercadoPago Checkout Pro**, persistencia híbrida (**PostgreSQL + MongoDB Atlas**) y actualización de stock/eventos en tiempo real mediante **WebSockets**.
 
-## Descripción
+- **URL Desplegada (Render):** `https://huriosfrontend-desarrollofullstack.onrender.com`
+- **Backend API Conectado:** `https://huriosbackend-desarrollofullstack.onrender.com`
 
-Hurios Rally permite a los usuarios consultar un catálogo de repuestos para vehículos menores, visualizar información de los productos y gestionar sus compras mediante un carrito.
+---
 
-El proyecto forma parte de un desarrollo académico y utiliza una arquitectura frontend basada en componentes y servicios, preparada para consumir una API REST.
+## 1. Características Principales
 
-## Tecnologías
+- **Catálogo Interactivo y Filtros Dinámicos:** Búsqueda por texto, filtrado por categoría y rango de precios, y ordenamiento automático.
+- **Reseñas y Calificaciones (MongoDB):** Cada tarjeta de producto (`ShopCard`) permite consultar el promedio de estrellas y publicar reseñas verificadas almacenadas en la colección `product_reviews` de MongoDB Atlas.
+- **Carrito de Compras Sincronizado en la Nube (MongoDB):** Estado global gestionado con `CartContext` que sincroniza automáticamente los ítems del usuario con la colección `carts` en MongoDB (`GET/PUT/DELETE /cart` y fusión automática al iniciar sesión con `POST /cart/merge`).
+- **Pasarela de Pagos Multi-Método (`Payment.tsx`):**
+  - **Tarjeta de Crédito / Débito** con vista previa interactiva de tarjeta en vivo.
+  - **Yape** con validación de código de aprobación.
+  - **MercadoPago Checkout Pro** con generación de preferencias en el backend (`POST /payments/checkout`) y página de verificación de retorno (`PaymentResult.tsx` en `/pago/exito`, `/pago/fallo`, `/pago/pendiente`).
+- **Actualizaciones en Tiempo Real con WebSockets (`RealtimeNotifier.tsx`):**
+  - Conexión persistente al canal `ws(s)://<backend>/ws/events`.
+  - Notificaciones emergentes en vivo cuando se registra una compra (`NEW_SALE`), cambia el stock (`STOCK_UPDATED`), se actualiza el catálogo (`PRODUCT_CREATED`/`PRODUCT_UPDATED`) o se publica una reseña (`NEW_REVIEW`).
+  - Refresco automático del stock en las vistas de **Productos** e **Inventario** sin recargar la página.
+- **Panel de Administración (RBAC):** Gestión de inventario, abastecimiento de stock, métricas de ventas y exportación de reportes a Excel.
 
-* React
-* TypeScript
-* Vite
-* React Router
-* Tailwind CSS
-* Node.js
-* pnpm
-* Git
-* GitHub
+---
 
-## Requisitos
+## 2. Arquitectura del Frontend
 
-Para ejecutar el proyecto se necesita tener instalado:
-
-* Node.js
-* pnpm
-* Git
-
-## Instalación
-
-Clonar el repositorio:
-
-```bash
-git clone URL_DEL_REPOSITORIO
+```mermaid
+flowchart LR
+    UI["Páginas & Componentes React"] --> CTX["Contextos Globales (CartContext)"]
+    UI --> API["Capa de Servicios API (src/api/*)"]
+    WS["RealtimeNotifier (WebSocket)"] -->|"Evento en vivo"| UI
+    API -->|"HTTP / JWT"| BE["Spring Boot Backend API"]
+    WS <-->|"ws(s):///ws/events"| BE
 ```
 
-Ingresar al proyecto:
+### Estructura de Directorios (`src/`)
+- `api/`: Clientes HTTP modulares (`auth.tsx`, `products.ts`, `cart.ts`, `payments.ts`, `reviews.ts`).
+- `components/`: Componentes reutilizables (`layout/`, `product/ShopCard.tsx`, `realtime/RealtimeNotifier.tsx`, `ui/`).
+- `config/`: Configuración centralizada de entorno (`api.ts`).
+- `context/`: Estado global del carrito sincronizado con MongoDB (`CartContext.tsx`).
+- `pages/`: Vistas de la aplicación (`Home`, `Products`, `Cart`, `Checkout`, `Payment`, `PaymentResult`, `Inventory`, `SalesHistory`, `AdminDashboard`, etc.).
+- `routes/`: Definición de rutas públicas y protegidas (`AppRoutes.tsx`, `ProtectedRoute.tsx`).
 
-```bash
-cd HuriosRally-Frontend-Avance1
-```
+---
 
-Instalar las dependencias:
+## 3. Variables de Entorno
 
+Crea un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
+
+| Variable | Descripción | Ejemplo Local | Ejemplo Producción (Render) |
+| :--- | :--- | :--- | :--- |
+| `VITE_API_URL` | URL base del Backend en Spring Boot (usada para llamadas REST y conexión WebSocket `/ws/events`) | `http://localhost:8080` | `https://huriosbackend-desarrollofullstack.onrender.com` |
+
+---
+
+## 4. Instrucciones de Instalación y Ejecución
+
+### Requisitos Previos
+- **Node.js** 18+ y **pnpm** (o npm)
+
+### 1. Instalar dependencias
 ```bash
 pnpm install
 ```
 
-Crear el archivo `.env` tomando como referencia `.env.example`.
-
-## Variables de entorno
-
-El proyecto utiliza variables de entorno para configurar la URL de la API.
-
-Ejemplo:
-
-```env
-VITE_API_URL=http://localhost:8080
-```
-
-El archivo `.env` no debe ser incluido en el repositorio. Para configurar el proyecto se debe utilizar `.env.example` como referencia.
-
-## Ejecución
-
-Para iniciar el servidor de desarrollo:
-
+### 2. Ejecutar servidor de desarrollo (Vite)
 ```bash
 pnpm dev
 ```
+La aplicación estará disponible en `http://localhost:5173`.
 
-Para generar la versión de producción:
-
+### 3. Compilar para producción
 ```bash
 pnpm build
 ```
-
-Para verificar el código mediante ESLint:
-
-```bash
-pnpm lint
-```
-
-## Rutas principales
-
-Actualmente el frontend cuenta con las siguientes rutas:
-
-* `/` — Página principal con banners promocionales y productos destacados.
-* `/productos` — Catálogo de repuestos y componentes con filtros y tarjetas informativas.
-* `/productos/:id` — Detalle de un repuesto.
-* `/carrito` — Carrito de compras.
-
-## Estructura del proyecto
-
-```text
-src/
-├── assets/             # Recursos estáticos locales
-├── components/
-│   ├── layout/         # Componentes estructurales (Navbar, Footer, Hero, MainLayout)
-│   ├── product/        # Componentes de negocio (ProductCard, ShopCard, BrandsCarousel)
-│   └── ui/             # Componentes reutilizables (Button, Input, Loading, ErrorMessage)
-├── config/             # Configuración base de la aplicación y API
-├── hooks/              # Hooks personalizados (useReveal)
-├── pages/
-│   ├── HomePage.tsx
-│   ├── ProductsPage.tsx
-│   ├── ProductDetailPage.tsx
-│   └── CartPage.tsx
-├── routes/
-│   └── AppRouter.tsx
-├── App.tsx
-├── index.css
-└── main.tsx
-```
-
-## Ramas
-
-El proyecto utiliza la siguiente estrategia de ramas:
-
-* `main`: versión estable del proyecto.
-* `develop`: rama principal de integración.
-* `feature/*`: ramas destinadas al desarrollo de funcionalidades específicas:
-  * `feature/setup`: configuración inicial del proyecto y rutas.
-  * `feature/ui`: componentes reutilizables, layout y vistas principales.
-  * `feature/api`: cliente HTTP y servicios de integración con backend.
-  * `feature/state`: gestión de estado global, contexto y formularios.
-
-## Estado del proyecto
-
-Se han implementado con éxito la estructura inicial, dependencias, rutas, layout de la aplicación (`Navbar`, `Footer`, `MainLayout`), componentes reutilizables (`Button`, `Input`, `Loading`, `ErrorMessage`), tarjetas de productos (`ProductCard`, `ShopCard`) y la vista principal (`HomePage`).
+Los archivos optimizados se generarán en la carpeta `dist/`.
