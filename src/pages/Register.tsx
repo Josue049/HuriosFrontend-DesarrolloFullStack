@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { ButtonState } from "../components/ui/ButtonState";
 import { Input } from "../components/ui/Input";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +18,7 @@ export function Register() {
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [celular, setCelular] = useState("");
+  const [dni, setDni] = useState("");
   const [clave, setClave] = useState("");
   const [repetirClave, setRepetirClave] = useState("");
 
@@ -62,8 +63,10 @@ export function Register() {
   const isPasswordMatch = clave.length >= 8 && clave === repetirClave;
   // Validación para números de celular peruanos (inician con 9 y tienen 9 dígitos)
   const isCelularValid = celular.length === 9 && /^9[0-9]{8}$/.test(celular);
+  const isDniValid = /^[0-9]{8}$/.test(dni);
   const isFormValid =
     nombre.trim() !== "" &&
+    isDniValid &&
     isEmailValid &&
     isCelularValid &&
     isPasswordMatch;
@@ -88,6 +91,7 @@ export function Register() {
         email: correo,
         password: clave,
         phone: celular,
+        dni,
       });
 
       // respuesta OK -> redirigir al formulario de verificación
@@ -168,6 +172,21 @@ export function Register() {
                       </p>
                     )}
                   </div>
+                )}
+              </div>
+
+              {/* Input para DNI */}
+              <div className="sm:col-span-2">
+                <Input
+                  label="DNI"
+                  type="text"
+                  inputMode="numeric"
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))}
+                  placeholder="8 dígitos"
+                />
+                {dni.length > 0 && !isDniValid && (
+                  <p className="mt-1 text-xs text-red-500">{dni.length}/8 dígitos - DNI incompleto</p>
                 )}
               </div>
 
