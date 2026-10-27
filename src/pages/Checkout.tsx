@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/layout/Footer";
 import Navbar from "../components/layout/Navbar";
@@ -6,6 +6,7 @@ import { useCart } from "../context/CartContext";
 import { getToken } from "../utils/token";
 import { useRoleProtection } from "../hooks/useRoleProtection";
 import { API_BASE_URL } from "../config/api";
+import { getUserProfile } from "../api/user";
 
 type DocumentType = "dni" | "factura";
 type DeliveryMethod = "pickup" | "delivery";
@@ -54,6 +55,22 @@ export function Checkout() {
             navigate("/login", { state: { from: "/checkout" } });
         }
     }, [navigate]);
+
+    // Auto-completar los datos del usuario autenticado desde su perfil
+    useEffect(() => {
+        if (!getToken()) return;
+        getUserProfile()
+            .then((p) => {
+                setFormData((prev) => ({
+                    ...prev,
+                    fullName: prev.fullName || p.fullName || "",
+                    phone: prev.phone || p.phone || "",
+                    dni: prev.dni || p.dni || "",
+                    deliveryAddress: prev.deliveryAddress || p.address || "",
+                }));
+            })
+            .catch(() => {});
+    }, []);
 
     // Verificar si el carrito está vacío
     useEffect(() => {
