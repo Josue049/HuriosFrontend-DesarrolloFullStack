@@ -27,6 +27,10 @@ interface YapeData {
 
 const API_BASE = API_BASE_URL;
 
+// Número oficial de Yape de Hurios Rally E.I.R.L. (único para todas las compras, no editable)
+const COMPANY_YAPE_NUMBER = "987654321";
+const COMPANY_YAPE_NAME = "Hurios Rally E.I.R.L.";
+
 export function Payment() {
     useRoleProtection("payment");
     const navigate = useNavigate();
@@ -63,6 +67,13 @@ export function Payment() {
         }
     }, []);
 
+    // Titular de la tarjeta se completa con el nombre del usuario autenticado
+    useEffect(() => {
+        if (checkoutInfo?.fullName) {
+            setCardData((prev) => (prev.cardName ? prev : { ...prev, cardName: String(checkoutInfo.fullName).toUpperCase() }));
+        }
+    }, [checkoutInfo]);
+
     useEffect(() => {
         const token = getToken();
         if (!token) {
@@ -80,23 +91,6 @@ export function Payment() {
     const finalTotal = totalPrice + shippingCost;
 
     const sanitizeNumber = (s: string) => s.replace(/\s+/g, "");
-
-    const luhnCheck = (num: string) => {
-        const s = sanitizeNumber(num);
-        if (!/^[0-9]+$/.test(s)) return false;
-        let sum = 0;
-        let alt = false;
-        for (let i = s.length - 1; i >= 0; i--) {
-            let n = parseInt(s.charAt(i), 10);
-            if (alt) {
-                n *= 2;
-                if (n > 9) n -= 9;
-            }
-            sum += n;
-            alt = !alt;
-        }
-        return sum % 10 === 0;
-    };
 
     const detectCardBrand = (digits: string) => {
         if (/^4/.test(digits)) return "visa";
@@ -184,10 +178,8 @@ export function Payment() {
             errors.cardNumber = "Número de tarjeta requerido";
         } else if (!/^\d+$/.test(numSan)) {
             errors.cardNumber = "El número de tarjeta solo debe contener dígitos";
-        } else if (numSan.length !== 16) {
-            errors.cardNumber = "El número de tarjeta debe tener 16 dígitos";
-        } else if (!luhnCheck(numSan)) {
-            errors.cardNumber = "Número de tarjeta inválido";
+        } else if (numSan.length < 13 || numSan.length > 19) {
+            errors.cardNumber = "El número de tarjeta debe tener entre 13 y 19 dígitos";
         }
 
         if (!cardData.cardName.trim()) errors.cardName = "Nombre del titular requerido";
@@ -216,12 +208,6 @@ export function Payment() {
 
     const validateYapePayment = (): boolean => {
         const errors: Record<string, string> = {};
-
-        if (!yapeData.phone.trim()) {
-            errors.phone = "Número de celular requerido";
-        } else if (!/^\d{9}$/.test(yapeData.phone)) {
-            errors.phone = "El número debe tener 9 dígitos";
-        }
 
         if (!yapeData.approvalCode.trim()) {
             errors.approvalCode = "Código de aprobación requerido";
@@ -310,7 +296,7 @@ export function Payment() {
                               brand: cardBrand || "visa",
                           }
                         : {
-                              phone: yapeData.phone,
+                              phone: COMPANY_YAPE_NUMBER,
                               approvalCode: yapeData.approvalCode,
                           },
                 items: items.map((item) => ({
@@ -613,7 +599,7 @@ export function Payment() {
 
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                    Titular de la tarjeta *
+                                                    Titular de la tarjeta (tu cuenta) *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -697,33 +683,18 @@ export function Payment() {
                                                     2. Pagar con Yape
                                                 </h2>
                                                 <p className="text-xs text-gray-500">
-                                                    Ingresa tu número afiliado a Yape y el código de aprobación de 6 dígitos
+                                                    Realiza el Yape al número de la empresa e ingresa el código de aprobación de 6 dígitos
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                    Número de Celular Yape *
-                                                </label>
-                                                <input
-                                                    type="tel"
-                                                    value={yapeData.phone}
-                                                    onChange={(e) =>
-                                                        setYapeData((prev) => ({
-                                                            ...prev,
-                                                            phone: e.target.value.replace(/\D/g, "").slice(0, 9),
-                                                        }))
-                                                    }
-                                                    placeholder="987654321"
-                                                    inputMode="numeric"
-                                                    maxLength={9}
-                                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-600"
-                                                />
-                                                {yapeErrors.phone && (
-                                                    <p className="text-xs text-red-600 mt-1">{yapeErrors.phone}</p>
-                                                )}
+                                            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                                                <p className="text-xs text-purple-700 font-medium">Yapea a nombre de {COMPANY_YAPE_NAME}</p>
+                                                <p className="text-3xl font-bold tracking-widest text-purple-800 mt-1">
+                                                    {COMPANY_YAPE_NUMBER.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3")}
+                                                </p>
+                                                <p className="text-sm font-semibold text-purple-900 mt-1">Monto: S/ {finalTotal.toFixed(2)}</p>
                                             </div>
 
                                             <div>
