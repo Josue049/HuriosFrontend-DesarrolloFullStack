@@ -5,6 +5,7 @@ const API_BASE = API_BASE_URL;
 type RegisterReq = {
   fullName?: string;
   phone?: string;
+  dni?: string;
   email: string;
   password: string;
 };

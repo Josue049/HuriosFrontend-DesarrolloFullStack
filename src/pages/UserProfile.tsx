@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
@@ -19,6 +19,7 @@ export function UserProfile() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [dni, setDni] = useState("");
   useEffect(() => {
     // Verificar autenticación
     if (!getToken()) {
@@ -39,6 +40,7 @@ export function UserProfile() {
       setFullName(data.fullName || "");
       setPhone(data.phone || "");
       setAddress(data.address || "");
+      setDni(data.dni || "");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -58,10 +60,18 @@ export function UserProfile() {
       setError(null);
       setSuccessMessage(null);
 
+      if (dni && !/^\d{8}$/.test(dni)) {
+        throw new Error("El DNI debe tener 8 dígitos");
+      }
+      if (phone && !/^9\d{8}$/.test(phone)) {
+        throw new Error("El teléfono debe tener 9 dígitos e iniciar con 9");
+      }
+
       await updateUserProfile({
         fullName,
         phone,
         address,
+        dni,
       });
 
       setSuccessMessage("Perfil actualizado correctamente");
@@ -86,6 +96,7 @@ export function UserProfile() {
     setFullName(profile?.fullName || "");
     setPhone(profile?.phone || "");
     setAddress(profile?.address || "");
+    setDni(profile?.dni || "");
     setError(null);
   };
   /*Muestra su perfil cargando */
@@ -217,6 +228,24 @@ export function UserProfile() {
                 />
               </div>
 
+              {/* DNI */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  DNI
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={dni}
+                  maxLength={8}
+                  onChange={(e) => setDni(e.target.value.replace(/\D/g, ""))}
+                  disabled={!editing}
+                  placeholder="Ingresa tu DNI (8 dígitos)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[var(--Primary_5)] focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">Se usará automáticamente en tus boletas de compra</p>
+              </div>
+
               {/* Teléfono */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -226,7 +255,7 @@ export function UserProfile() {
                   type="tel"
                   value={phone}
                   maxLength={9}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                   disabled={!editing}
                   placeholder="Ingresa tu número de teléfono"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[var(--Primary_5)] focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
