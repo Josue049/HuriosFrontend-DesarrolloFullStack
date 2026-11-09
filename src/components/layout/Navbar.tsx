@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
@@ -100,6 +100,11 @@ const Navbar: React.FC = () => {
           </div>
 
           <Link to="/about" className="hover:underline">Nosotros</Link>
+          {isAdmin && (
+            <Link to="/admin-profile" className="px-3 py-1.5 rounded-lg bg-amber-400 text-slate-900 font-bold text-sm hover:bg-amber-300 transition-colors shadow-xs">
+              Dashboard Admin
+            </Link>
+          )}
         </nav>
 
         {/* acciones (cart, login, hamburger) */}
@@ -230,7 +235,14 @@ const Navbar: React.FC = () => {
           </details>
 
           <Link to="/about" className="py-2 border-b border-white/10">Nosotros</Link>
-          <Link to="/user" className="py-2">Usuario</Link>
+          {isAdmin && (
+            <Link to="/admin-profile" className="py-2 border-b border-white/10 font-bold text-amber-300" onClick={() => setMenuOpen(false)}>
+              Dashboard Admin
+            </Link>
+          )}
+          <Link to={isAuthenticated ? "/profile" : "/login"} className="py-2" onClick={() => setMenuOpen(false)}>
+            {isAuthenticated ? "Mi Perfil" : "Iniciar Sesión"}
+          </Link>
         </nav>
         </div>
       </div>

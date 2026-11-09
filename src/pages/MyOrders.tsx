@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { getMyOrders, getSaleById, type PaymentSale } from "../api/payments";
+import { submitProductReview } from "../api/reviews";
 import { getToken } from "../utils/token";
 
 function formatCurrency(value: number) {
@@ -24,6 +25,13 @@ export function MyOrders() {
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Estado para valorar y comentar un producto comprado
+  const [reviewingProductId, setReviewingProductId] = useState<number | null>(null);
+  const [ratingValue, setRatingValue] = useState<number>(5);
+  const [commentText, setCommentText] = useState<string>("");
+  const [submittingReview, setSubmittingReview] = useState<boolean>(false);
+  const [reviewFeedback, setReviewFeedback] = useState<Record<number, string>>({});
 
   useEffect(() => {
     if (!getToken()) {
@@ -63,6 +71,7 @@ export function MyOrders() {
     try {
       setDetailsLoading(true);
       setError(null);
+      setReviewingProductId(null);
       const sale = await getSaleById(orderId);
       setSelectedOrder(sale);
     } catch (err: unknown) {
@@ -76,21 +85,43 @@ export function MyOrders() {
     }
   };
 
+  const handleSendProductReview = async (productId: number) => {
+    if (!commentText.trim()) return;
+    try {
+      setSubmittingReview(true);
+      await submitProductReview(productId, ratingValue, commentText.trim());
+      setReviewFeedback((prev) => ({
+        ...prev,
+        [productId]: "¡Gracias! Tu calificación y comentario fueron publicados.",
+      }));
+      setReviewingProductId(null);
+      setCommentText("");
+      setRatingValue(5);
+    } catch (err: any) {
+      setReviewFeedback((prev) => ({
+        ...prev,
+        [productId]: err.message || "Error al guardar la valoración.",
+      }));
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-[var(--Primary_0)] py-8">
         <div className="max-w-5xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mis Pedidos</h1>
-              <p className="text-gray-600 mt-1">
-                Revisa tus compras, su estado y el detalle de cada orden.
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Mis Pedidos</h1>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                Revisa tus compras, su estado y valora los repuestos que adquiriste.
               </p>
             </div>
             <button
               onClick={() => navigate("/user-profile")}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors self-start cursor-pointer"
             >
               Regresar
             </button>
@@ -113,7 +144,7 @@ export function MyOrders() {
               <p className="text-gray-600 mb-4">Cuando realices una compra, la verás aquí.</p>
               <button
                 onClick={() => navigate("/products")}
-                className="px-5 py-3 bg-[var(--Primary_5)] text-white rounded-md hover:bg-[#1e4a6f] transition-colors"
+                className="px-5 py-3 bg-[var(--Primary_5)] text-white rounded-md hover:bg-[#1e4a6f] transition-colors cursor-pointer"
               >
                 Ver productos
               </button>
@@ -146,9 +177,9 @@ export function MyOrders() {
                       </p>
                       <button
                         onClick={() => void openOrder(order.id)}
-                        className="mt-3 px-4 py-2 bg-[var(--Primary_5)] cursor-pointer text-white rounded-md hover:bg-[#1e4a6f] transition-colors"
+                        className="mt-3 px-4 py-2 bg-[var(--Primary_5)] cursor-pointer text-white rounded-md hover:bg-[#1e4a6f] transition-colors text-sm font-medium"
                       >
-                        Ver detalle
+                        Ver detalle y valorar productos
                       </button>
                     </div>
                   </div>
@@ -194,32 +225,111 @@ export function MyOrders() {
                       <p className="text-gray-500">Entrega</p>
                       <p className="font-medium text-gray-900">{selectedOrder.deliveryMethod}</p>
                       <p className="text-gray-600">
-                        {selectedOrder.deliveryAddress || "Sin dirección registrada"}
+                        {selectedOrder.deliveryAddress || "Recojo en tienda"}
                       </p>
                     </div>
                   </section>
 
                   <section>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-3">Productos</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                      Productos adquiridos (puedes calificar tu compra)
+                    </h4>
                     <div className="space-y-3">
-                      {(selectedOrder.items || []).map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between gap-4 border rounded-lg p-4"
-                        >
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {item.product?.name || `Producto #${item.product?.id || item.id}`}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {item.quantity} x {formatCurrency(item.unitPrice)}
-                            </p>
+                      {(selectedOrder.items || []).map((item) => {
+                        const prodId = item.product?.id;
+                        const isReviewing = prodId && reviewingProductId === prodId;
+                        const feedback = prodId ? reviewFeedback[prodId] : undefined;
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="border rounded-lg p-4 space-y-3"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {item.product?.name || `Producto #${prodId || item.id}`}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {item.quantity} x {formatCurrency(item.unitPrice)}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <p className="font-semibold text-gray-900">
+                                  {formatCurrency(item.subtotal)}
+                                </p>
+                                {prodId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setReviewingProductId(isReviewing ? null : prodId);
+                                      setRatingValue(5);
+                                      setCommentText("");
+                                    }}
+                                    className="px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold text-xs rounded-md transition-colors cursor-pointer"
+                                  >
+                                    ★ Valorar producto
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {feedback && (
+                              <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-3 py-1.5">
+                                {feedback}
+                              </p>
+                            )}
+
+                            {isReviewing && prodId && (
+                              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-gray-700">
+                                    Califica este repuesto:
+                                  </span>
+                                  <div className="flex gap-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setRatingValue(star)}
+                                        className={`text-xl cursor-pointer ${
+                                          star <= ratingValue ? "text-yellow-500" : "text-gray-300"
+                                        }`}
+                                      >
+                                        ★
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                                <textarea
+                                  value={commentText}
+                                  onChange={(e) => setCommentText(e.target.value)}
+                                  placeholder="¿Qué te pareció la calidad de este repuesto?"
+                                  rows={2}
+                                  className="w-full text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-[var(--Primary_5)]"
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setReviewingProductId(null)}
+                                    className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={submittingReview || !commentText.trim()}
+                                    onClick={() => void handleSendProductReview(prodId)}
+                                    className="px-4 py-1 text-xs bg-[var(--Primary_5)] text-white font-semibold rounded hover:bg-[#1e4a6f] disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {submittingReview ? "Publicando..." : "Publicar valoración"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <p className="font-semibold text-gray-900">
-                            {formatCurrency(item.subtotal)}
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </section>
 
