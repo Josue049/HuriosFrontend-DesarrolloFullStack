@@ -1,4 +1,4 @@
-// src/components/ShopCard.tsx
+// src/components/product/ShopCard.tsx
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "../../context/CartContext";
@@ -10,10 +10,6 @@ import {
   type ProductReview,
 } from "../../api/reviews";
 
-/**
- * Tipo/Interfaz pública del producto.
- * Exportamos esto para que otras páginas puedan importar el shape del producto.
- */
 export type Product = {
   id: number;
   name: string;
@@ -24,17 +20,23 @@ export type Product = {
   category?: string;
 };
 
-/**
- * ShopCard: componente que muestra la información principal de un producto,
- * incluyendo el promedio de calificaciones y reseñas almacenadas en MongoDB ("product_reviews").
- */
-export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
+interface ShopCardProps {
+  product: Product;
+  autoOpen?: boolean;
+  onRatingLoaded?: (productId: number, averageRating: number, totalReviews: number) => void;
+}
+
+export const ShopCard: React.FC<ShopCardProps> = ({
+  product,
+  autoOpen = false,
+  onRatingLoaded,
+}) => {
   const API_BASE = API_BASE_URL;
   const { addToCart, isOpen, toggleCart } = useCart();
   const isAdmin = getRole() === "ADMINISTRADOR";
   const isLoggedIn = Boolean(getToken());
 
-  const [showDetails, setShowDetails] = useState<boolean>(false);
+  const [showDetails, setShowDetails] = useState<boolean>(autoOpen);
   const [imgError, setImgError] = useState<boolean>(false);
 
   // Estado de reseñas en MongoDB
@@ -48,16 +50,39 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
   const [reviewSuccess, setReviewSuccess] = useState<string>("");
 
   useEffect(() => {
+    if (autoOpen) {
+      setShowDetails(true);
+    }
+  }, [autoOpen]);
+
+  useEffect(() => {
     let mounted = true;
-    getProductReviews(product.id).then((summary) => {
-      if (mounted) {
-        setAverageRating(summary.averageRating || 0);
-        setTotalReviews(summary.totalReviews || 0);
-        setReviews(summary.reviews || []);
+    const loadRating = () => {
+      getProductReviews(product.id).then((summary) => {
+        if (mounted) {
+          const avg = summary.averageRating || 0;
+          const total = summary.totalReviews || 0;
+          setAverageRating(avg);
+          setTotalReviews(total);
+          setReviews(summary.reviews || []);
+          onRatingLoaded?.(product.id, avg, total);
+        }
+      });
+    };
+
+    loadRating();
+
+    const handleRealtimeReview = (e: Event) => {
+      const custom = e as CustomEvent;
+      if (custom.detail?.type === "NEW_REVIEW" && Number(custom.detail?.data?.productId) === product.id) {
+        loadRating();
       }
-    });
+    };
+
+    window.addEventListener("hurios-realtime-event", handleRealtimeReview);
     return () => {
       mounted = false;
+      window.removeEventListener("hurios-realtime-event", handleRealtimeReview);
     };
   }, [product.id]);
 
@@ -67,9 +92,12 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
     setReviewError("");
     setReviewSuccess("");
     getProductReviews(product.id).then((summary) => {
-      setAverageRating(summary.averageRating || 0);
-      setTotalReviews(summary.totalReviews || 0);
+      const avg = summary.averageRating || 0;
+      const total = summary.totalReviews || 0;
+      setAverageRating(avg);
+      setTotalReviews(total);
       setReviews(summary.reviews || []);
+      onRatingLoaded?.(product.id, avg, total);
     });
   };
 
@@ -86,11 +114,14 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
 
     try {
       const updated = await submitProductReview(product.id, newRating, newComment.trim());
-      setAverageRating(updated.averageRating || 0);
-      setTotalReviews(updated.totalReviews || 0);
+      const avg = updated.averageRating || 0;
+      const total = updated.totalReviews || 0;
+      setAverageRating(avg);
+      setTotalReviews(total);
       setReviews(updated.reviews || []);
       setNewComment("");
-      setReviewSuccess("¡Tu reseña fue guardada en MongoDB!");
+      setReviewSuccess("¡Tu reseña fue guardada exitosamente!");
+      onRatingLoaded?.(product.id, avg, total);
     } catch (err: any) {
       setReviewError(err.message || "No se pudo guardar la reseña.");
     } finally {
@@ -107,7 +138,6 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
     : "/assets/imgs/placeholder.svg";
 
   const handleImageError = () => {
-    console.error(`Error cargando imagen para producto ${product.id}:`, imageUrl);
     setImgError(true);
   };
 
@@ -131,8 +161,11 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
   };
 
   return (
-    <article className="bg-white rounded-lg shadow p-4 flex flex-col transition-transform hover:scale-105">
-      {/* Imagen (placeholder si no hay) */}
+    <article
+      className={`bg-white rounded-lg shadow p-4 flex flex-col transition-transform hover:scale-105 ${
+        autoOpen ? "ring-2 ring-emerald-500" : ""
+      }`}
+    >
       <div className="aspect-[4/3] w-full mb-3 overflow-hidden rounded">
         <img
           src={imgError ? "/assets/imgs/placeholder.svg" : imageUrl}
@@ -142,7 +175,6 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
         />
       </div>
 
-      {/* Título y calificación */}
       <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
       <div className="flex items-center gap-1.5 mb-1">
         {renderStars(averageRating)}
@@ -152,12 +184,10 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
       </div>
       <p className="text-sm text-gray-600 flex-1">{product.description || "Sin descripción"}</p>
 
-      {/* Precio */}
       <div className="text-xl font-bold text-[var(--Primary_5)] mb-2">
         S/ {Number(product.price).toFixed(2)}
       </div>
 
-      {/* Advertencia de stock bajo */}
       {product.stock !== undefined && product.stock < 10 && product.stock > 0 && (
         <div className="text-sm text-orange-600 font-medium mb-2 flex items-center gap-1">
           <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -179,11 +209,10 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
         </div>
       )}
 
-      {/* Botones de acción */}
       <div className="flex flex-col gap-2">
         <button
           onClick={handleAddToCart}
-          className="w-full px-4 py-2 bg-[var(--Primary_5)] text-white rounded-md font-medium hover:bg-[#1e4a6f] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--Primary_5)]"
+          className="w-full px-4 py-2 bg-[var(--Primary_5)] text-white rounded-md font-medium hover:bg-[#1e4a6f] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           aria-label={`Añadir ${product.name} al carrito`}
           disabled={isAdmin || (product.stock !== undefined && product.stock <= 0)}
           title={isAdmin ? "Los administradores no pueden comprar" : undefined}
@@ -201,7 +230,7 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
         </button>
         <button
           onClick={handleOpenDetails}
-          className="w-full px-4 py-2 border border-[var(--Primary_5)] text-[var(--Primary_5)] rounded-md font-medium hover:bg-[var(--Primary_5)] hover:text-white transition-colors"
+          className="w-full px-4 py-2 border border-[var(--Primary_5)] text-[var(--Primary_5)] rounded-md font-medium hover:bg-[var(--Primary_5)] hover:text-white transition-colors cursor-pointer"
           aria-label={`Ver detalles de ${product.name}`}
         >
           Ver detalles y reseñas
@@ -286,7 +315,6 @@ export const ShopCard: React.FC<{ product: Product }> = ({ product }) => {
                       : "Añadir al carrito"}
                   </button>
 
-                  {/* Sección de Reseñas en MongoDB */}
                   <div className="border-t border-gray-200 pt-4 mt-2">
                     <h3 className="text-base font-semibold text-gray-900 mb-3">
                       Opiniones de Clientes ({totalReviews})
