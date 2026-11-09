@@ -266,9 +266,9 @@ export function MyOrders() {
                                       setRatingValue(5);
                                       setCommentText("");
                                     }}
-                                    className="px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold text-xs rounded-md transition-colors cursor-pointer"
+                                    className="px-3 py-1.5 bg-[var(--Primary_5)] hover:bg-[#1e4361] text-white font-medium text-xs rounded-md transition-colors cursor-pointer"
                                   >
-                                    ★ Valorar producto
+                                    Valorar producto
                                   </button>
                                 )}
                               </div>
