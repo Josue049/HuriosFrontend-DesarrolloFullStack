@@ -45,11 +45,9 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       
       let newItems: CartItem[];
       if (existingItem) {
-        // Verificar si hay stock disponible antes de incrementar
         const newQuantity = existingItem.quantity + 1;
         const stock = action.payload.stock;
         if (stock !== undefined && newQuantity > stock) {
-          // No incrementar si se excede el stock
           return state;
         }
         newItems = state.items.map(item =>
@@ -58,10 +56,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
             : item
         );
       } else {
-        // Verificar stock al agregar nuevo producto
         const stock = action.payload.stock;
         if (stock !== undefined && stock <= 0) {
-          // No agregar si no hay stock
           return state;
         }
         newItems = [...state.items, { ...action.payload, quantity: 1 }];
@@ -93,7 +89,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const newItems = state.items.map(item => {
         if (item.id === action.payload.id) {
           let newQuantity = Math.max(0, action.payload.quantity);
-          // Limitar cantidad al stock disponible
           if (item.stock !== undefined) {
             newQuantity = Math.min(newQuantity, item.stock);
           }
@@ -146,7 +141,7 @@ const CART_STORAGE_KEY = 'huriosRally_cart';
 
 const loadCartFromStorage = (): CartState => {
   try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    const stored = sessionStorage.getItem(CART_STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       return {
@@ -155,7 +150,7 @@ const loadCartFromStorage = (): CartState => {
       };
     }
   } catch (error) {
-    console.error('Error loading cart from localStorage:', error);
+    console.error('Error loading cart from sessionStorage:', error);
   }
   return {
     items: [],
@@ -172,7 +167,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isRemoteUpdateRef = useRef(false);
   const lastSyncedTokenRef = useRef<string | null>(null);
 
-  // Sincronizar o fusionar con MongoDB cuando hay sesión activa
+  // Sincronizar o fusionar con MongoDB cuando hay sesión activa en esta pestaña
   useEffect(() => {
     const syncInitialCartWithMongo = async () => {
       const token = getToken();
@@ -193,31 +188,29 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     syncInitialCartWithMongo();
 
-    const handleAuthOrStorage = () => {
+    const handleAuthChange = () => {
       const currentToken = getToken();
       if (currentToken && lastSyncedTokenRef.current !== currentToken) {
         syncInitialCartWithMongo();
-      } else if (!currentToken) {
+      } else if (!currentToken && lastSyncedTokenRef.current !== null) {
         lastSyncedTokenRef.current = null;
+        isRemoteUpdateRef.current = true;
+        dispatch({ type: 'CLEAR_CART' });
       }
     };
 
-    window.addEventListener('hurios-auth-change', handleAuthOrStorage);
-    window.addEventListener('focus', handleAuthOrStorage);
-    window.addEventListener('storage', handleAuthOrStorage);
+    window.addEventListener('hurios-auth-change', handleAuthChange);
     return () => {
-      window.removeEventListener('hurios-auth-change', handleAuthOrStorage);
-      window.removeEventListener('focus', handleAuthOrStorage);
-      window.removeEventListener('storage', handleAuthOrStorage);
+      window.removeEventListener('hurios-auth-change', handleAuthChange);
     };
   }, [state.items]);
 
-  // Guardar en localStorage y en MongoDB cada vez que cambian los items del carrito
+  // Guardar en sessionStorage (por pestaña) y en MongoDB cada vez que cambian los items del carrito
   useEffect(() => {
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
+      sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+      console.error('Error saving cart to sessionStorage:', error);
     }
 
     if (isRemoteUpdateRef.current) {
