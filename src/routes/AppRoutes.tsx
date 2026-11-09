@@ -1,6 +1,6 @@
 // src/routes/AppRoutes.tsx
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "../pages/Home";
 import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
@@ -22,9 +22,36 @@ import { Inventory } from "../pages/Inventory";
 import BoletasFacturas from "../pages/BoletasFacturas";
 import { Category } from "../pages/Category";
 import { MyOrders } from "../pages/MyOrders";
-const AppRoutes: React.FC = () => (
+import RealtimeNotifier from "../components/realtime/RealtimeNotifier";
+import WhatsAppButton from "../components/whatsapp/WhatsAppButton";
+
+function GlobalNavigationListener() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleNavigate = (event: Event) => {
+      const target = (event as CustomEvent<string>).detail;
+      if (target) {
+        navigate(target, { replace: true });
+      }
+    };
+    window.addEventListener("hurios-navigate", handleNavigate);
+    return () => {
+      window.removeEventListener("hurios-navigate", handleNavigate);
+    };
+  }, [navigate]);
+
+  return null;
+}
+
+interface AppRoutesProps {
+  showFloatingWidgets?: boolean;
+}
+
+const AppRoutes: React.FC<AppRoutesProps> = ({ showFloatingWidgets = true }) => (
   <CartProvider>
     <Router>
+      <GlobalNavigationListener />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -46,7 +73,7 @@ const AppRoutes: React.FC = () => (
         <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
         <Route path="/inventario" element={<Inventory />} />
-  <Route path="/boletas-facturas" element={<BoletasFacturas />} />
+        <Route path="/boletas-facturas" element={<BoletasFacturas />} />
 
         {/* catch-all: muestra la location en la UI si no hubo match */}
         <Route
@@ -62,6 +89,14 @@ const AppRoutes: React.FC = () => (
 
       {/* CartSidebar global - se muestra en toda la aplicación */}
       <CartSidebar />
+
+      {/* Notificador WebSocket en tiempo real (dentro de Router para navegación SPA sin recarga) y WhatsApp */}
+      {showFloatingWidgets && (
+        <>
+          <RealtimeNotifier />
+          <WhatsAppButton />
+        </>
+      )}
     </Router>
   </CartProvider>
 );

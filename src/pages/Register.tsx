@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ButtonState } from "../components/ui/ButtonState";
 import { Input } from "../components/ui/Input";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/auth";
 
 /*
@@ -292,12 +292,12 @@ export function Register() {
               <p className="text-sm text-[var(--Primary_5)]">
                 ¿Ya tienes una cuenta?
               </p>
-              <a 
-                href="/login" 
+              <Link 
+                to="/login" 
                 className="block w-full text-center border-2 border-[var(--Primary_4)] text-[var(--Primary_4)] py-3 rounded-lg hover:bg-[var(--Primary_4)] hover:text-white transition-all duration-300 transform hover:scale-[1.02] font-medium"
               >
                 Iniciar sesión
-              </a>
+              </Link>
             </div>
           </form>
         </div>
