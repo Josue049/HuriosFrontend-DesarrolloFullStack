@@ -1,9 +1,9 @@
-
 import React from "react";
+import { Link } from "react-router-dom";
 
 /*
  Footer.tsx
- - Pie de página con información básica y enlaces.
+ - Pie de página con información básica y enlaces SPA.
 */
 
 const Footer: React.FC = () => {
@@ -18,9 +18,9 @@ const Footer: React.FC = () => {
         <div>
           <h3 className="font-semibold mb-2">Enlaces</h3>
           <ul className="space-y-1 text-sm">
-            <li><a href="/" className="text-white/80 hover:underline">Inicio</a></li>
-            <li><a href="/products" className="text-white/80 hover:underline">Productos</a></li>
-            <li><a href="/about" className="text-white/80 hover:underline">Nosotros</a></li>
+            <li><Link to="/" className="text-white/80 hover:underline">Inicio</Link></li>
+            <li><Link to="/products" className="text-white/80 hover:underline">Productos</Link></li>
+            <li><Link to="/about" className="text-white/80 hover:underline">Nosotros</Link></li>
           </ul>
         </div>
 

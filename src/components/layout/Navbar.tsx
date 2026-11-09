@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { getToken, clearToken, getRole } from "../../utils/token";
 
@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
   // userDropdownOpen controla dropdown de usuario
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { totalItems } = useCart();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const userDropdownRef = useRef<HTMLDivElement>(null);
   
   // Verificar si hay sesión activa y rol
@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
     clearToken();
     localStorage.removeItem('huriosRally_cart'); // Limpiar carrito también
     setUserDropdownOpen(false);
-    window.location.href = '/'; // Recargar página
+    sessionStorage.removeItem('huriosRally_cart'); navigate('/');
   };
 
   return (

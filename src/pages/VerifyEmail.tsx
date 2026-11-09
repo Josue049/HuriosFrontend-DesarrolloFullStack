@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { sendVerificationCode, verifyCode } from "../api/auth";
 import { saveRole, saveToken } from "../utils/token";
 
@@ -147,12 +147,12 @@ export function VerifyEmail() {
             </div>
 
             <div className="text-center">
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="text-[var(--Primary_5)] hover:text-[var(--Primary_6)] text-sm font-medium transition-colors duration-200"
               >
                 Volver al inicio de sesión
-              </a>
+              </Link>
             </div>
           </div>
         </div>

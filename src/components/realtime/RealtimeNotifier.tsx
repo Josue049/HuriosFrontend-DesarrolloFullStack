@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 
 export interface RealtimeEventPayload {
@@ -74,6 +75,7 @@ function getActionLink(evt: RealtimeEventPayload): { href: string; label: string
 }
 
 export default function RealtimeNotifier() {
+  const navigate = useNavigate();
   const [connected, setConnected] = useState(false);
   const [activeClients, setActiveClients] = useState<number>(1);
   const [toast, setToast] = useState<RealtimeEventPayload | null>(null);
@@ -93,22 +95,24 @@ export default function RealtimeNotifier() {
       if (unmounted) return;
       try {
         const wsUrl = resolveWebSocketUrl();
-        const socket = new WebSocket(wsUrl);
-        wsRef.current = socket;
-        activeSocketInstance = socket;
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+        activeSocketInstance = ws;
 
-        socket.onopen = () => {
+        ws.onopen = () => {
           if (unmounted) return;
           setConnected(true);
-          if (pingIntervalRef.current) window.clearInterval(pingIntervalRef.current);
+          if (pingIntervalRef.current) {
+            window.clearInterval(pingIntervalRef.current);
+          }
           pingIntervalRef.current = window.setInterval(() => {
-            if (socket.readyState === WebSocket.OPEN) {
-              socket.send(JSON.stringify({ type: "PING" }));
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: "PING" }));
             }
           }, 25000);
         };
 
-        socket.onmessage = (event) => {
+        ws.onmessage = (event) => {
           if (unmounted) return;
           try {
             const payload: RealtimeEventPayload = JSON.parse(event.data);
@@ -116,42 +120,49 @@ export default function RealtimeNotifier() {
               setActiveClients(payload.activeClients);
             }
 
-            if (payload.type && payload.type !== "CONNECTED" && payload.type !== "PONG") {
+            if (payload.type && payload.type !== "CONNECTION_READY" && payload.type !== "PONG") {
               const enriched: RealtimeEventPayload = {
                 ...payload,
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                timestamp: payload.timestamp || new Date().toISOString(),
               };
 
               window.dispatchEvent(
                 new CustomEvent("hurios-realtime-event", { detail: enriched })
               );
 
-              setHistory((prev) => [enriched, ...prev].slice(0, 15));
-              setUnreadCount((prev) => prev + 1);
-              setToast(enriched);
+              if (enriched.message) {
+                setToast(enriched);
+                setHistory((prev) => [enriched, ...prev].slice(0, 15));
+                setUnreadCount((prev) => prev + 1);
 
-              if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-              toastTimerRef.current = window.setTimeout(() => {
-                setToast(null);
-              }, 10000);
+                if (toastTimerRef.current) {
+                  window.clearTimeout(toastTimerRef.current);
+                }
+                toastTimerRef.current = window.setTimeout(() => {
+                  setToast(null);
+                }, 9000);
+              }
             }
           } catch {
             // Ignorar tramas no JSON
           }
         };
 
-        socket.onclose = () => {
+        ws.onclose = () => {
           if (unmounted) return;
           setConnected(false);
-          if (activeSocketInstance === socket) {
+          if (activeSocketInstance === ws) {
             activeSocketInstance = null;
           }
-          if (pingIntervalRef.current) window.clearInterval(pingIntervalRef.current);
-          reconnectTimerRef.current = window.setTimeout(connect, 5000);
+          if (pingIntervalRef.current) {
+            window.clearInterval(pingIntervalRef.current);
+          }
+          reconnectTimerRef.current = window.setTimeout(connect, 4000);
         };
 
-        socket.onerror = () => {
-          socket.close();
+        ws.onerror = () => {
+          ws.close();
         };
       } catch {
         reconnectTimerRef.current = window.setTimeout(connect, 5000);
@@ -223,13 +234,16 @@ export default function RealtimeNotifier() {
                     </div>
                     <p className="text-slate-100 font-medium">{item.message}</p>
                     {link && (
-                      <a
-                        href={link.href}
-                        onClick={() => setShowHistory(false)}
-                        className="inline-block mt-1 text-xs font-semibold text-sky-400 hover:text-sky-300 underline"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowHistory(false);
+                          navigate(link.href);
+                        }}
+                        className="inline-block mt-1 text-xs font-semibold text-sky-400 hover:text-sky-300 underline cursor-pointer"
                       >
                         {link.label}
-                      </a>
+                      </button>
                     )}
                   </div>
                 );
@@ -249,13 +263,17 @@ export default function RealtimeNotifier() {
             </div>
             <p className="text-slate-100 mt-1 font-medium text-sm">{toast.message}</p>
             {toastLink && (
-              <a
-                href={toastLink.href}
-                onClick={() => setToast(null)}
-                className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-colors shadow-sm"
+              <button
+                type="button"
+                onClick={() => {
+                  const target = toastLink.href;
+                  setToast(null);
+                  navigate(target);
+                }}
+                className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-colors shadow-sm cursor-pointer"
               >
                 {toastLink.label}
-              </a>
+              </button>
             )}
           </div>
           <button

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import AppRoutes from "./routes/AppRoutes";
 import { LoadingScreen } from './components/ui/LoadingScreen';
-import WhatsAppButton from './components/whatsapp/WhatsAppButton';
-import RealtimeNotifier from './components/realtime/RealtimeNotifier';
 
 function App() {
   const [showLoading, setShowLoading] = useState(true);
@@ -29,15 +27,7 @@ function App() {
       {showLoading && !hasShownLoading && (
         <LoadingScreen onLoadingComplete={handleLoadingComplete} />
       )}
-      <AppRoutes />
-
-      {/* Notificador WebSocket en tiempo real y Botón flotante de WhatsApp */}
-      {!showLoading && (
-        <>
-          <RealtimeNotifier />
-          <WhatsAppButton />
-        </>
-      )}
+      <AppRoutes showFloatingWidgets={!showLoading} />
     </>
   );
 }
