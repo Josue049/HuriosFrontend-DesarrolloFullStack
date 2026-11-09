@@ -78,7 +78,7 @@ export function redirectToLoginForExpiredSession(
   window.sessionStorage?.setItem(AUTH_MESSAGE_KEY, message);
 
   if (window.location.pathname !== "/login") {
-    window.location.replace("/login");
+    window.dispatchEvent(new CustomEvent("hurios-navigate", { detail: "/login" }));
   }
 }
 

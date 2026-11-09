@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { resetPassword } from "../api/auth";
 import Navbar from "../components/layout/Navbar";
 import { Input } from "../components/ui/Input";
@@ -173,15 +173,15 @@ export const NewPassword: React.FC = () => {
 
                 {/* Enlace de regreso */}
                 <div className="text-center mt-6">
-                  <a 
-                    href="/login" 
+                  <Link 
+                    to="/login" 
                     className="text-[var(--Primary_5)] hover:text-[var(--Primary_6)] text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                     Volver al inicio de sesión
-                  </a>
+                  </Link>
                 </div>
               </>
             ) : (

@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { getToken, clearToken, getRole } from "../../utils/token";
+import { NavbarNotificationBell } from "../realtime/RealtimeNotifier";
 
 
 const categories = [
@@ -26,7 +27,7 @@ const Navbar: React.FC = () => {
   // userDropdownOpen controla dropdown de usuario
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { totalItems } = useCart();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const userDropdownRef = useRef<HTMLDivElement>(null);
   
   // Verificar si hay sesión activa y rol
@@ -48,7 +49,7 @@ const Navbar: React.FC = () => {
     clearToken();
     localStorage.removeItem('huriosRally_cart'); // Limpiar carrito también
     setUserDropdownOpen(false);
-    window.location.href = '/'; // Recargar página
+    sessionStorage.removeItem('huriosRally_cart'); navigate('/');
   };
 
   return (
@@ -101,7 +102,7 @@ const Navbar: React.FC = () => {
 
           <Link to="/about" className="hover:underline">Nosotros</Link>
           {isAdmin && (
-            <Link to="/admin-profile" className="px-3 py-1.5 rounded-lg bg-amber-400 text-slate-900 font-bold text-sm hover:bg-amber-300 transition-colors shadow-xs">
+            <Link to="/admin-profile" className="px-3 py-1.5 rounded-md bg-white text-[#27557a] font-semibold text-sm hover:bg-gray-100 transition-colors">
               Dashboard Admin
             </Link>
           )}
@@ -130,6 +131,9 @@ const Navbar: React.FC = () => {
             )}
             </Link>
           )}
+
+          {/* campana de notificaciones - mismo estilo y contraste que el botón de perfil */}
+          <NavbarNotificationBell />
 
           {/* dropdown de usuario */}
           <div className="relative" ref={userDropdownRef}>

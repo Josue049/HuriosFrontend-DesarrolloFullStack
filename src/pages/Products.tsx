@@ -171,7 +171,7 @@ export default function Products() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--Primary_5)]"
                     >
                       <option value="name">Nombre (A-Z)</option>
-                      <option value="rating-desc">★ Mejor valorados</option>
+                      <option value="rating-desc">Mejor valorados</option>
                       <option value="price-asc">Precio: Menor a Mayor</option>
                       <option value="price-desc">Precio: Mayor a Menor</option>
                     </select>
@@ -185,9 +185,9 @@ export default function Products() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--Primary_5)]"
                     >
                       <option value={0}>Todas las calificaciones</option>
-                      <option value={4}>★★★★☆ (4 o más)</option>
-                      <option value={3}>★★★☆☆ (3 o más)</option>
-                      <option value={5}>★★★★★ (Solo 5 estrellas)</option>
+                      <option value={4}>4 estrellas o más</option>
+                      <option value={3}>3 estrellas o más</option>
+                      <option value={5}>5 estrellas</option>
                     </select>
                   </div>
 

@@ -1,11 +1,11 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clearToken } from '../utils/token';
 
-const TIMEOUT_DURATION = 2 * 60 * 1000// 2 minutos en milisegundos
+const TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutos en milisegundos
 
 /**
- * Hook para cerrar sesión automáticamente después de 2 minutos de inactividad
+ * Hook para cerrar sesión automáticamente después de 30 minutos de inactividad
  * Solo debe usarse en páginas del administrador
  */
 export function useAdminSessionTimeout() {
@@ -14,31 +14,23 @@ export function useAdminSessionTimeout() {
 
   useEffect(() => {
     const resetTimer = () => {
-      // Limpiar temporizador anterior
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
-      // Crear nuevo temporizador
       timeoutRef.current = window.setTimeout(() => {
-        // Cerrar sesión y redirigir
         clearToken();
         navigate('/login', { state: { message: 'Sesión cerrada por inactividad' } });
       }, TIMEOUT_DURATION);
     };
 
-    // Eventos que reinician el temporizador
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
-
-    // Iniciar temporizador
     resetTimer();
 
-    // Agregar listeners para resetear el temporizador
     events.forEach(event => {
       document.addEventListener(event, resetTimer);
     });
 
-    // Cleanup
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -49,5 +41,3 @@ export function useAdminSessionTimeout() {
     };
   }, [navigate]);
 }
-
-
